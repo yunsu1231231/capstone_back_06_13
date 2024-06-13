@@ -79,9 +79,13 @@ const { post_id } = req.body;
   }
 
   try {
+    const query = 'DELETE FROM posts WHERE user_id = ? AND post_id = ?';
+    const result = await db.executeQuery(query, [user_id, post_id]);
+
+    /*
     const query = 'DELETE posts FROM SET user_id = ? WHERE post_id = ?';
     const result = await db.executeQuery(query, [user_id,post_id]);
-
+    */
 
     if (result.affectedRows === 0) {
       // 삭제할 게시물이 없는 경우
