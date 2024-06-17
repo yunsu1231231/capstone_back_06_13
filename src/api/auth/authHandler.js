@@ -108,6 +108,7 @@ const login = async (req, res, next) => {
       message: "token is created",
       token: token,
       user_id: user.user_id,
+      username:user.username,
     });
   } else {
     // 실패
@@ -156,7 +157,7 @@ const check = async (req, res, next) => {
     const data = await runQuery(`SELECT * FROM users WHERE user_id = ${user_id};`)
 
     if(!data || !data.length) {
-      throw new Error("no user")
+      throw new Error("no user")  
     }
     const user = data[0]
 
@@ -281,6 +282,39 @@ const requestCoaching = async (req, res, next) => {
 };
 
 
+// 2.2. 트레이너 입장에서 유저에게 코멘트를 보내는 부분
+const sendCoaching = async (req, res, next) => {
+  try {
+  const trainer_id = req.decoded.user_id;
+
+  const { user_id, comment } = req.body;
+    const query = `INSERT INTO  trainer_interaction (user_id, trainer_id, interaction_date, interaction_type) VALUES (?, ?,?,?)`;
+    const today = new Date()
+    const interaction_type = 'coaching_send'
+
+    const result = await db.executeQuery(query, [user_id, trainer_id, today, interaction_type]);
+    const interaction_id = result.insertId; // 새로 생성된 interaction_id 가져오기
+
+    // 코멘트를 추가로 저장
+    if (comment) {
+      const updateQuery = `UPDATE trainer_interaction SET comment = ? WHERE interaction_id = ? AND user_id = ?`;
+      await db.executeQuery(updateQuery, [comment, interaction_id, user_id]);
+    }
+    
+    return res.status(200).json({
+      code: 200,
+      message: "Coaching request sent successfully.",
+      comment: comment || null, // 응답에 코멘트 포함
+    });
+  } catch (error) {
+    console.error("Failed to send coaching request:", error);
+    return res.status(500).json({
+      code: 500,
+      message: "Failed to send coaching request.",
+    });
+  }
+};
+
 // 2.5 트레이너가 자신에게 온 요청을 볼 수 있는 부분 
 const getTrainerRequests = async (req, res, next) => {
   try {
@@ -312,6 +346,35 @@ const getTrainerRequests = async (req, res, next) => {
 };
 
 
+// 2.6 유저 입장에서 trainer_interaction 을 받는 부분
+const getUserRequests = async (req, res, next) => {
+  try {
+
+    const user_id = req.decoded.user_id;
+
+    // const { trainer_id } = req.params; // 트레이너의 ID를 요청에서 가져옵니다.
+
+    // 특정 트레이너가 받은 요청을 조회하는 쿼리를 작성합니다.
+    const query = `SELECT * FROM trainer_interaction WHERE user_id = ?`;
+
+    // executeQuery 함수를 사용하여 쿼리를 실행하고 데이터를 가져옵니다.
+    const requests = await db.executeQuery(query, [user_id]);
+
+    // 요청이 성공적으로 조회되면 해당 정보를 응답합니다.
+    return res.status(200).json({
+      code: 200,
+      message: "Trainer requests retrieved successfully.",
+      requests: requests,
+    });
+  } catch (error) {
+    // 조회 과정에서 에러가 발생한 경우 에러 메시지를 응답합니다.
+    console.error("Failed to retrieve trainer requests:", error);
+    return res.status(500).json({
+      code: 500,
+      message: "Failed to retrieve trainer requests.",
+    });
+  }
+};
 
 
 // 3. 트레이너가 요청 수락 - 트래이너가 접속해서 수락을 누른다.
@@ -538,4 +601,7 @@ module.exports = {
   getExercisesByUserId,
   payload,
   getTrainerIdByUserId,
+  getTrainerRequests,
+  getUserRequests,
+  sendCoaching,
 };

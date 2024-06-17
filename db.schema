@@ -1,0 +1,246 @@
+CREATE DATABASE IF NOT EXISTS capstone;
+USE capstone;
+
+CREATE TABLE IF NOT EXISTS users (
+    user_id INT AUTO_INCREMENT PRIMARY KEY,
+    username VARCHAR(50) NOT NULL,
+    email VARCHAR(100) NOT NULL,
+    password VARCHAR(100) NOT NULL,
+    confirmPassword VARCHAR(100) NOT NULL,
+    is_trainer BOOLEAN NOT NULL DEFAULT FALSE,
+    postname VARCHAR(50),
+    weight DECIMAL(5,2),
+    body_fat DECIMAL(5,2),
+    muscle_mass DECIMAL(5,2)
+);
+
+
+CREATE TABLE IF NOT EXISTS posts (
+    post_id INT AUTO_INCREMENT PRIMARY KEY,
+    title VARCHAR(50) NOT NULL,
+    content VARCHAR(100) NOT NULL,
+    photo_url VARCHAR(100) NOT NULL,
+    user_id Int,   
+    instagram_tag VARCHAR(100),
+    likes VARCHAR(100),
+   FOREIGN KEY (user_id) REFERENCES users(user_id)
+);
+
+CREATE TABLE IF NOT EXISTS comments (
+    comment_id Int AUTO_INCREMENT PRIMARY KEY,
+    user_id Int,   
+    content VARCHAR(100), 
+    created_at date,
+    post_id INT,
+   FOREIGN KEY (user_id) REFERENCES users(user_id),
+   FOREIGN KEY (post_id) REFERENCES posts(post_id) ON DELETE CASCADE
+);
+
+CREATE TABLE IF NOT EXISTS exercises (
+    exercise_id INT AUTO_INCREMENT PRIMARY KEY,
+    user_id INT,
+    exercise_name VARCHAR(100),
+    exercise_date DATE,
+    duration_minutes INT,
+    calories_burned DECIMAL(5,2),
+    user_email VARCHAR(255),
+   date DATE NOT NULL,
+   exercise VARCHAR(255),
+   count1 INT,
+   count2 INT,   
+    FOREIGN KEY (user_id) REFERENCES users(user_id)
+);
+
+CREATE TABLE IF NOT EXISTS diet (
+    diet_id INT AUTO_INCREMENT PRIMARY KEY,
+    user_id INT,
+    meal_name VARCHAR(100) NOT NULL,
+    meal_date DATE NOT NULL,
+    meal_description TEXT,
+    FOREIGN KEY (user_id) REFERENCES users(user_id)
+);
+
+CREATE TABLE IF NOT EXISTS youtube_links (
+    link_id INT AUTO_INCREMENT PRIMARY KEY,
+    exercise_id INT,
+    youtube_link VARCHAR(500) NOT NULL,
+    FOREIGN KEY (exercise_id) REFERENCES exercises(exercise_id)
+);
+
+CREATE TABLE IF NOT EXISTS notifications (
+    notification_id INT AUTO_INCREMENT PRIMARY KEY,
+    user_id INT,
+    notification_text TEXT NOT NULL,
+    notification_time TIME DEFAULT '12:00:00', -- 올바른 칼럼 이름 사용 및 기본값 유지
+    enabled BOOLEAN DEFAULT TRUE, -- 기본적으로 알림 기능 활성화
+    FOREIGN KEY (user_id) REFERENCES users(user_id)
+);
+
+
+
+CREATE TABLE IF NOT EXISTS stamps (
+    stamp_id INT AUTO_INCREMENT PRIMARY KEY,
+    user_id INT,
+    stamp_date DATE NOT NULL,
+    FOREIGN KEY (user_id) REFERENCES users(user_id)
+);
+
+CREATE TABLE IF NOT EXISTS trainers (
+    trainer_id INT AUTO_INCREMENT PRIMARY KEY,
+    trainer_name VARCHAR(100) NOT NULL,
+    trainer_specialization VARCHAR(100)
+);
+
+CREATE TABLE IF NOT EXISTS trainer_interaction (
+    interaction_id INT AUTO_INCREMENT PRIMARY KEY,
+    user_id INT,
+    trainer_id INT,
+    interaction_date DATETIME NOT NULL,
+    comment VARCHAR(100),
+    interaction_type VARCHAR(255),
+    FOREIGN KEY (user_id) REFERENCES users(user_id),
+    FOREIGN KEY (trainer_id) REFERENCES trainers(trainer_id)
+);
+
+-- 새로운 사용자 데이터 삽입
+INSERT INTO users (username, email, password, confirmPassword, weight, body_fat, muscle_mass)
+VALUES
+    ('Kim_taeyoung', 'kimxodud@naver.com', '1234', '1234', 90.0, 20.0, 45.0),
+    ('Jo_yunsu', 'joyunsu@naver.com', '5678', '5678', 80.0, 15.0, 40.0);
+    
+    -- 새로운 트레이너 데이터 삽입
+INSERT INTO trainers (trainer_name, trainer_specialization)
+VALUES
+    ('trainer1', 'specialization1'),
+    ('trainer2', 'specialization2'),
+    ('trainer3', 'specialization3'),
+    ('trainer4', 'specialization4'),
+    ('trainer5', 'specialization5');
+
+-- 새로운 운동 데이터 삽입
+INSERT INTO exercises (user_id, exercise_name, exercise_date, duration_minutes, calories_burned)
+VALUES
+    (1, 'Squat', '2024-04-15', 30, 300),
+    (2, 'Lunge', '2024-04-16', 45, 450);
+
+-- 새로운 식단 데이터 삽입
+INSERT INTO diet (user_id, meal_name, meal_date, meal_description)
+VALUES
+    (1, 'Breakfast', '2024-04-15', 'Oatmeal with berries and honey'),
+    (2, 'Lunch', '2024-04-16', 'Grilled chicken salad with avocados');
+
+-- 새로운 유튜브 링크 데이터 삽입
+INSERT INTO youtube_links (exercise_id, youtube_link)
+VALUES
+    (1, 'https://youtube.com/watch?v=examplelink1'),
+    (10, 'https://www.youtube.com/watch?v=a4mcRL99pU0'), -- 스쿼트
+    (11, 'https://youtu.be/7erin-2cpRo?si=olrjXisgBL2JmlrH'), -- 런지
+    (12, 'https://youtu.be/Ia9DYFMkMmU?si=lMJcTZDeDkesKEvx'), -- 숄더프레스
+    (13, 'https://youtu.be/m1JF3dyvRWU?si=sXlgwm68qSXbWoVA'); -- 덤벨컬
+
+-- 새로운 알림 데이터 삽입
+INSERT INTO notifications (user_id, notification_text, notification_time, enabled) 
+VALUES
+   (1, 'Time to workout, John!', '18:00:00', TRUE),
+   (2, 'Time to workout, Jane!', '07:00:00', TRUE);
+
+-- 새로운 스탬프 데이터 삽입
+INSERT INTO stamps (user_id, stamp_date)
+VALUES
+    (1, '2024-04-15'),
+    (2, '2024-04-16');
+
+-- 새로운 트레이너 상호작용 데이터 삽입
+INSERT INTO trainer_interaction (user_id, trainer_id, interaction_date, interaction_type)
+VALUES
+    (1, 1, '2024-04-15 10:00:00', 'diet_advice'),
+    (2, 2, '2024-04-16 11:00:00', 'exercise_recommendation');
+
+-- 중복된 사용자 데이터 삭제
+DELETE u1
+FROM users u1
+JOIN (
+    SELECT MIN(user_id) as min_id, email
+    FROM users
+    GROUP BY email
+    HAVING COUNT(*) > 1
+) u2 ON u1.email = u2.email AND u1.user_id > u2.min_id
+WHERE u1.user_id > 0;
+
+-- 중복된 운동 데이터 삭제
+DELETE e1
+FROM exercises e1
+JOIN (
+    SELECT MIN(exercise_id) as min_id, user_id, exercise_name, exercise_date
+    FROM exercises
+    GROUP BY user_id, exercise_name, exercise_date
+    HAVING COUNT(*) > 1
+) e2 ON e1.user_id = e2.user_id AND e1.exercise_name = e2.exercise_name AND e1.exercise_date = e2.exercise_date AND e1.exercise_id > e2.min_id
+WHERE e1.exercise_id > 0;
+
+-- 중복된 식단 데이터 삭제
+DELETE d1
+FROM diet d1
+JOIN (
+    SELECT MIN(diet_id) as min_id, user_id, meal_name, meal_date
+    FROM diet
+    GROUP BY user_id, meal_name, meal_date
+    HAVING COUNT(*) > 1
+) d2 ON d1.user_id = d2.user_id AND d1.meal_name = d2.meal_name AND d1.meal_date = d2.meal_date AND d1.diet_id > d2.min_id
+WHERE d1.diet_id > 0;
+
+-- 중복된 유튜브 링크 데이터 삭제
+DELETE y1
+FROM youtube_links y1
+JOIN (
+    SELECT MIN(link_id) as min_id, youtube_link
+    FROM youtube_links
+    GROUP BY youtube_link
+    HAVING COUNT(*) > 1
+) y2 ON y1.youtube_link = y2.youtube_link AND y1.link_id > y2.min_id
+WHERE y1.link_id > 0; 
+
+-- 중복된 트레이너 상호작용 데이터 삭제
+DELETE ti1
+FROM trainer_interaction ti1
+JOIN (
+    SELECT MIN(interaction_id) as min_id, user_id, trainer_id, interaction_date
+    FROM trainer_interaction
+    GROUP BY user_id, trainer_id, interaction_date
+    HAVING COUNT(*) > 1
+) ti2 ON ti1.user_id = ti2.user_id AND ti1.trainer_id = ti2.trainer_id AND ti1.interaction_date = ti2.interaction_date AND ti1.interaction_id > ti2.min_id
+WHERE ti1.interaction_id > 0;
+
+-- 사용자 ID 값을 매개변수로 받아 해당 사용자의 운동 및 식단 기록 조회
+SET @userId = 123; -- 실제 사용자 ID 값으로 대체
+SELECT u.username, e.exercise_name, e.exercise_date, e.duration_minutes, d.meal_name, d.meal_date, d.meal_description
+FROM users u
+LEFT JOIN exercises e ON u.user_id = e.user_id
+LEFT JOIN diet d ON u.user_id = d.user_id
+WHERE u.user_id = @userId;
+
+-- 특정 운동 ID 값을 매개변수로 받아 해당 운동의 유튜브 링크 조회
+SET @exerciseId = 456; -- 실제 운동 ID 값으로 대체
+SELECT y.youtube_link
+FROM exercises e
+LEFT JOIN youtube_links y ON e.exercise_id = y.exercise_id
+WHERE e.exercise_id = @exerciseId;
+
+-- 사용자 ID 값을 매개변수로 받아 해당 사용자에게 보낸 알림 및 스탬프 기록 조회
+SET @userId = 123; -- 실제 사용자 ID 값으로 대체
+SELECT n.notification_text, s.stamp_date
+FROM notifications n
+LEFT JOIN stamps s ON n.user_id = s.user_id
+WHERE n.user_id = @userId;
+
+-- 사용자 ID 값을 매개변수로 받아 해당 사용자와 트레이너 간의 상호작용 기록 조회
+SET @userId = 123; -- 실제 사용자 ID 값으로 대체
+SELECT t.trainer_name, t.trainer_specialization, ti.interaction_date, ti.interaction_type
+FROM trainers t
+LEFT JOIN trainer_interaction ti ON t.trainer_id = ti.trainer_id
+WHERE ti.user_id = @userId;
+
+-- 중복을 제거한 유튜브 링크, 알림, 사용자 조회
+SELECT DISTINCT * FROM youtube_links;
+SELECT DISTINCT * FROM notifications;
+SELECT DISTINCT * FROM users;
