@@ -12,7 +12,7 @@ dotenv.config();
 const db_config = {
   host: process.env.DB_HOST || 'localhost',
   user: process.env.DB_USER || 'root',
-  password: process.env.DB_PASSWORD || '022skt342m!', // 개인비번 
+  password: process.env.DB_PASSWORD || '# 비번', // 개인비번 
   database: process.env.DB_NAME || 'capstone', // 이름 
   multipleStatements: true
 }
